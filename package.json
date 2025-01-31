@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js",
+  "start": "node cardView.js",
+  "dev": "nodemon cardView.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,0 +1,20 @@
+{
+  "name": "senior-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+  "start": "node cardView.js",
+  "dev": "nodemon cardView.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

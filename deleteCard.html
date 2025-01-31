@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Card</title>
+</head>
+<body>
+
+    <h2>Stored Cards</h2>
+    <div id="response"></div>
+
+    <script>
+        // Function to delete a card
+        function deleteCard(cardId) {
+            // Retrieve stored cards from localStorage
+            let storedCards = JSON.parse(localStorage.getItem("cards")) || [];
+
+            // Remove the card with the specified cardId
+            storedCards = storedCards.filter(card => card.card_id !== cardId);
+
+            // Save the updated cards list back to localStorage
+            localStorage.setItem("cards", JSON.stringify(storedCards));
+
+            // Refresh the displayed cards
+            displayCards();
+        }
+
+        // Function to display stored cards
+        function displayCards() {
+            // Retrieve the list of stored cards from localStorage
+            let storedCards = JSON.parse(localStorage.getItem("cards")) || [];
+            let responseDiv = document.getElementById("response");
+
+            responseDiv.innerHTML = ""; // Clear any previous content
+
+            if (storedCards.length === 0) {
+                responseDiv.innerHTML = "<p>No cards available.</p>";
+            } else {
+                // Loop through stored cards and display each one
+                storedCards.forEach(card => {
+                    let cardDiv = document.createElement("div");
+                    cardDiv.innerHTML = `
+                        <p><strong>${card.card_name}</strong> (${card.rarity}) - ${card.value} USD</p>
+                        <button onclick="deleteCard(${card.card_id})">Delete</button>
+                        <hr>
+                    `;
+                    responseDiv.appendChild(cardDiv);
+                });
+            }
+        }
+
+        // Initialize the card display when the page loads
+        document.addEventListener("DOMContentLoaded", displayCards);
+    </script>
+
+</body>
+</html>

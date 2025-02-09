@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Cards</title>
+</head>
+<body>
+    <h2>Pokémon Cards</h2>
+    <button onclick="logout()">Logout</button>
+    <button onclick="window.location.href='addCard.html'">Add Card</button>
+
+    <div id="cardList"></div>
+
+    <script>
+        async function fetchCards() {
+            const response = await fetch("http://localhost:3000/cards", {
+                headers: { "Authorization": "Bearer fake-token" }
+            });
+
+            if (!response.ok) {
+                alert("Please log in first.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const cards = await response.json();
+            const cardList = document.getElementById("cardList");
+            cardList.innerHTML = "";
+
+            cards.forEach(card => {
+                const cardDiv = document.createElement("div");
+                cardDiv.innerHTML = `
+                    <p><strong>${card.name}</strong> (${card.rarity}) - ${card.type}</p>
+                    <button onclick="deleteCard(${card.id})">Delete</button>
+                    <hr>
+                `;
+                cardList.appendChild(cardDiv);
+            });
+        }
+
+        async function deleteCard(cardId) {
+            await fetch(`http://localhost:3000/cards/${cardId}`, { method: "DELETE" });
+            fetchCards();
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            window.location.href = "login.html";
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchCards);
+    </script>
+</body>
+</html>

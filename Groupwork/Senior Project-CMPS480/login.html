@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="css/form.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
 </head>
 <body>
-    <h2>Login</h2>
+    <h2>CardTrack Login</h2>
     <form onsubmit="login(event)">
-        <label for="username">Username:</label>
+        <label for="username">Username</label>
         <input type="text" id="username" required><br><br>
 
-        <label for="password">Password:</label>
+        <label for="password">Password</label>
         <input type="password" id="password" required><br><br>
 
         <button type="submit">Login</button>
     </form>
+    <a href="register.html">Register Account</a>
 
     <script>
         async function login(event) {

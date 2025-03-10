@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
-    <head> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Card</title>
+    <head>
+        <link rel="stylesheet" href="css/form.css"> 
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add Card</title>
     </head>
 
     <body>
@@ -25,7 +26,7 @@
         <label for="condition">Condition</label>
         <input type="text" id="condition" name="condition" required><br><br>
 
-        <label for="card_name">Value (USD):</label>
+        <label for="value">Value (USD):</label>
         <input type="number" id="value" name="value" step="0.01" required><br><br>
 
         <button type="button" onclick="sendRequest()">Submit New Card!</button>
@@ -40,14 +41,17 @@
         async function sendRequest() {
             const data = {
                 name: document.getElementById("card_name").value,
-                type: document.getElementById("category").value, 
+                category: document.getElementById("category").value,
+                set_name: document.getElementById("set_name").value, 
                 rarity: document.getElementById("rarity").value,
+                condition: document.getElementById("condition").value,
+                value: document.getElementById("value").value,
                 favorite: false,  
             };
 
             //POST request to the backend API
             try {
-                const response = await fetch('http://localhost:3000/cards', {
+                const response = await fetch('http://eperkun.it.pointpark.edu:3000/cards', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -61,7 +65,7 @@
 
                 const newCard = await response.json();
                 alert("Card added successfully!");
-                window.location.href = 'main.html';  // Redirect to the card view page
+                window.location.href = 'cards.html';  // Redirect to the card view page
             } catch (error) {
                 console.error('Error:', error);
                 alert('Failed to add card: ' + error.message);

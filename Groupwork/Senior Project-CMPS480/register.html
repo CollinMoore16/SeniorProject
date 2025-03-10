@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="css/form.css">
+        <title>Account Registration Mockup</title>
+    </head>
+    <body>
+        <h1>Register for CardTrack</h1>
+
+        <form>
+            <label>Email Address</label>
+            <input type="text" id="email" name="email" require><br>
+
+            <label>Username</label>
+            <input type="text" id="username" name="username" require><br>
+
+            <label>Password</label>
+            <input type="password" id="password" name="pw" require><br>
+
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmpw" require><br>
+
+            <button type="button" onclick="sendRequest()">Submit</button>
+        </form>
+
+        <script>
+            // POST account info to API
+            async function sendRequest() {
+                const data = {
+                    email: document.getElementById("email").value,
+                    username: document.getElementById("username").value, 
+                    password: document.getElementById("password").value,
+                    confirmPassword: document.getElementById("confirmPassword").value,
+                };
+
+                //POST request to the backend API
+                try {
+                    const response = await fetch('http://eperkun.it.pointpark.edu:3000/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to register account');
+                    }
+    
+                    alert("Account registered successfully!");
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error:' + error);
+                    alert('Failed to register account: ' + error.message);
+                }
+            }
+        </script>
+    </body>
+</html>

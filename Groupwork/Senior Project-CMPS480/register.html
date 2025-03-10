@@ -35,7 +35,7 @@
 
                 //POST request to the backend API
                 try {
-                    const response = await fetch('http://localhost:3000/register', {
+                    const response = await fetch('http://eperkun.it.pointpark.edu:3000/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@
                     alert("Account registered successfully!");
                     window.location.href = 'login.html';
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('Error:' + error);
                     alert('Failed to register account: ' + error.message);
                 }
             }

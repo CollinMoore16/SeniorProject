@@ -2,28 +2,44 @@ const express = require("express");
 const cors = require("cors"); // Allow frontend to communicate with backend
 const app = express();
 const path = require('path');
+
 const emailValidator = require("email-validator");
+
+const bcrypt = require('bcrypt');
+const saltValue = 10;
+
+//Database connection
+const db = require("mysql");
+var con = db.createConnection({
+    host: "db.it.pointpark.edu",
+    user: "cardtrack",
+    password: "cardtrack",
+    database: "cardtrack"
+});
+con.connect((err) => {
+    if (err) throw err;
+    console.log('Database connection successful');
+});
+  
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// Sample user database (Replace with real authentication in the future)
-let users = [{ email: "admin@cardtrack.test", username: "admin", password: "password123" }];
-
 // Simulated session storage
 let loggedInUser = null;
-
-// Sample Database (Pokémon Cards)
-let cards = [
-    { id: 1, name: "Pikachu", type: "Electric", rarity: "Common", favorite: false },
-    { id: 2, name: "Charizard", type: "Fire", rarity: "Rare", favorite: true },
-    { id: 3, name: "Bulbasaur", type: "Grass", rarity: "Uncommon", favorite: false }
-];
+var loggedInUserID = -1;
 
 // Get All Cards (Requires Login)
 app.get("/cards", checkAuth, (req, res) => {
-    res.json(cards);
+    const sql = "SELECT * FROM cards WHERE user_id = ?";
+    con.query(sql, [loggedInUserID], (err, data) => {
+        if(err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(data);
+        }
+    });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -37,14 +53,33 @@ app.get('/cards.html', (req, res) => {
 // Login Route
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-        loggedInUser = username;
-        res.json({ success: true, message: "Login successful!" });
-    } else {
-        res.status(401).json({ success: false, message: "Invalid credentials!" });
-    }
+    const sql = "SELECT * FROM users WHERE username = ?";
+
+    con.query(sql, [username], (err, result) => {
+        if(err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        if(result.length === 0) {
+            return res.status(401).json({ success: false, message: "Username or password is incorrect." });
+        }
+
+        const hashedPw = result[0].password;
+        bcrypt.compare(password, hashedPw, (err, match) => {
+            if(err) {
+                console.log(err.message);
+                return res.status(500).json({ success: false, message: "Error verifying password" });
+            }
+            
+            if(!match) {
+                return res.status(401).json({ success: false, message: "Username or password is incorrect." });
+            }
+
+            loggedInUser = result[0].username;
+            loggedInUserID = result[0].user_id;
+            res.json({ success: true, message: "Login successful." });
+        });
+    });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,6 +91,7 @@ app.get('/login', (req, res) => {
 // Logout Route
 app.post("/logout", (req, res) => {
     loggedInUser = null;
+    loggedInUserID = -1;
     res.json({ success: true, message: "Logged out successfully!" });
 });
 
@@ -69,37 +105,51 @@ function checkAuth(req, res, next) {
 
 // Get Card by ID (Protected)
 app.get("/cards/:id", checkAuth, (req, res) => {
-    const card = cards.find(c => c.id === parseInt(req.params.id));
-    if (!card) return res.status(404).json({ message: "Card not found" });
-    res.json(card);
+    const id = req.params.id;
+    const sql = "SELECT * FROM cards WHERE card_id = ?";
+
+    con.query(sql, [id], (err, data) => {
+        if(err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        if(data.length === 0) {
+            return res.status(404).json({ message: "Card not found" });
+        }
+
+        res.json(data);
+    });
 });
 
 // Add a New Card 
 app.post("/cards", checkAuth, (req, res) => {
-    const { name, type, rarity, favorite } = req.body;
-    if (!name || !type || !rarity) {
+    console.log(req.body);
+    const { name, category, set_name, rarity, condition, value } = req.body;
+    if (!name || !category || !rarity) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const newCard = {
-        id: cards.length + 1,
-        name,
-        type,
-        rarity,
-        favorite: favorite || false
-    };
-
-    cards.push(newCard);
-    res.status(201).json(newCard);
+    sql = "INSERT INTO cards (`name`, category, set_name, rarity, `condition`, value, user_id, date_added, date_modified) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())"
+    con.query(sql, [name, category, set_name, rarity, condition, value, loggedInUserID], (err, result) => {
+        if(err) {
+            console.log("Insert query failed " + err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        return res.status(201).json({ success: true, message: "Card was added successfully" });
+    });
 });
 
 // Delete a Card 
 app.delete("/cards/:id", checkAuth, (req, res) => {
-    const cardIndex = cards.findIndex(c => c.id === parseInt(req.params.id));
-    if (cardIndex === -1) return res.status(404).json({ message: "Card not found" });
-
-    cards.splice(cardIndex, 1);
-    res.json({ message: "Card deleted successfully" });
+    const id = req.params.id;
+    const sql = "DELETE FROM cards WHERE card_id = ?";
+    con.query(sql, [id], (err, result) => {
+        if(err) {
+            console.log(err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ success: true, message: "Card deleted successfully" });
+    });
 });
 
 // Register account
@@ -110,13 +160,23 @@ app.post("/register", (req, res) => {
 
     // Check if email address is valid
     if (!emailValidator.validate(email)) {
+        console.log("Invalid email address");
         return res.status(400).json({ success: false, message: "Invalid email address." });
     }
 
     // Check if email is already in use
-    if (users.some(acct => acct.email.toLowerCase() === email.toLowerCase())) {
-        return res.status(400).json({ success: false, message: "Email address is already in use." });
-    }
+    var sql = 'SELECT * FROM users WHERE email = ? ';
+    con.query(sql, [email], (err, data) => {
+        if(err) {
+            console.log(err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if(data.length > 0) {
+            console.log("Email address in use");
+            return res.status(400).json({ success: false, message: "Email address is already in use." });
+        }
+    });
 
     // Check if username meets requirements
 
@@ -126,16 +186,27 @@ app.post("/register", (req, res) => {
     // - and _
     // and is less than or equal to 16 characters
     if (!/^[a-zA-Z0-9\-_]{1,16}$/.test(username)) {
+        console.log("Invalid username")
         return res.status(400).json({ success: false, message: "Invalid username." });
     }
 
     // Check if username is already in use
-    if (users.some(acct => acct.username.toLowerCase() === username.toLowerCase())) {
-        return res.status(400).json({ success: false, message: "Username is already in use." });
-    }
+    sql = 'SELECT * FROM users WHERE username = ? ';
+    con.query(sql, [username], (err, data) => {
+        if(err) {
+            console.log(err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if(data.length > 0) {
+            console.log("Username already in use");
+            return res.status(400).json({ success: false, message: "Username is already in use." });
+        }
+    });
 
     // Check if entered passwords match
     if (password !== confirmPassword) {
+        console.log("Mismatched passwords");
         return res.status(400).json({ success: false, message: "Passwords do not match." });
     }
 
@@ -144,12 +215,26 @@ app.post("/register", (req, res) => {
     // Letters a-Z
     // At least 1 special character
     if (!(password.length >= 10 && /[A-Z]/.test(password) && /[\W_]/.test(password))) {
+        console.log("Password doesn't meet requirements");
         return res.status(400).json({ success: false, message: "Password doesn't meet requirements." });
     }
 
     // If all checks pass, create the account
-    users.push({ email, username, password });
-    return res.status(201).json({ success: true, message: "Account was created successfully." });
+    bcrypt.hash(password, saltValue, (err, hashedPw) => {
+        if(err) {
+            console.log("error hashing password");
+            return res.status(500).json({ error: err.message });
+        }
+
+        sql = "INSERT INTO users (email, username, password, date_registered, date_modified) VALUES (?, ?, ?, NOW(), NOW())"
+        con.query(sql, [email, username, hashedPw], (err, result) => {
+            if(err) {
+                console.log("Insert query failed " + err.message);
+                return res.status(500).json({ error: err.message });
+            }
+            return res.status(201).json({ success: true, message: "Account was created successfully." });
+        });
+      });
 });
 
 // Start Server

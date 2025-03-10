@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -110,7 +110,7 @@
 
     <script>
         async function fetchCards() {
-            const response = await fetch("http://localhost:3000/cards", {
+            const response = await fetch("http://eperkun.it.pointpark.edu:3000/cards", {
                 headers: { "Authorization": "Bearer fake-token" }
             });
 
@@ -127,8 +127,8 @@
             cards.forEach(card => {
                 const cardDiv = document.createElement("div");
                 cardDiv.innerHTML = `
-                    <p><strong>${card.name}</strong> (${card.rarity}) - ${card.type}</p>
-                    <button onclick="deleteCard(${card.id})">Delete</button>
+                    <p><strong>${card.name}</strong> (${card.rarity}) - ${card.category}</p>
+                    <button onclick="deleteCard(${card.card_id})">Delete</button>
                     <hr>
                 `;
                 cardList.appendChild(cardDiv);
@@ -136,7 +136,7 @@
         }
 
         async function deleteCard(cardId) {
-            await fetch(`http://localhost:3000/cards/${cardId}`, { method: "DELETE" });
+            await fetch(`http://eperkun.it.pointpark.edu:3000/cards/${cardId}`, { method: "DELETE" });
             fetchCards();
         }
 

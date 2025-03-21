@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "node cardView.js",
-  "dev": "nodemon cardView.js",
+    "start": "node cardView.js",
+    "dev": "nodemon cardView.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "express": "^4.21.2"
   },
   "devDependencies": {

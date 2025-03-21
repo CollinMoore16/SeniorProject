@@ -5,7 +5,7 @@ const path = require('path');
 
 const emailValidator = require("email-validator");
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const saltValue = 10;
 
 //Database connection

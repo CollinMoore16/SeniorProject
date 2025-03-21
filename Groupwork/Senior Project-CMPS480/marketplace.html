@@ -1,0 +1,45 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Card Marketplace</title>
+        <link rel="stylesheet" href="styles.css">
+        <script src="https://cdn.jsdeliver.net/npm/chart.js"></script>
+    </head>
+
+    <body>
+        <h1>Card Marketplace</h1>
+
+        <div>
+            <input type="text" id="search" placeholder="Search for a card..."
+            <select id="filter">
+                <option value="">all catergories</option>
+                <option value="common">Common</option>
+                <option value="Uncommon">Uncommon</option>
+                <option value="Rare">Rare</option>
+            </select>
+            <select id="priceFilter">
+                <option value="">All Prices</option>
+                <option value="low">below $10</option>
+                <option value="mid">$10 - $50</option>
+                <option value="high">Above $50</option>
+            </select>
+        </div>
+
+        <div id="marketplace"></div>
+
+        <h2>List a Card for Sale!</h2>
+        <form id="listCardForm">
+            <input type="text" id="card_name" placeholder="Card Name" required>
+            <input type="text" id="category" placeholder="Category" required>
+            <input type="text" id="rarity" placeholder="Rarity" required>
+            <input type="number" id="price" placeholder="Price (USD)" required>
+            <button type="submit">List Card</button>
+        </form>
+
+        <h2>Price Trends</h2>
+        <canvas id="priceChart"></canvas>
+
+        <script src="marketplace.js"></script>
+    </body>
+</html>

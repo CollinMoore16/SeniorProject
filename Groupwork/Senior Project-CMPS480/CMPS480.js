@@ -152,6 +152,48 @@ app.delete("/cards/:id", checkAuth, (req, res) => {
     });
 });
 
+//Fetch all cards in the marketplace
+app.get("/marketplace", (req, res) => {
+    const sql = "SELECT * FROM marketplace";
+    con.query(sql, (err, data) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(data);
+        }
+    });
+});
+
+//List a card for sale
+app.post("/marketplace", (req, res) => {
+    const { name, category, rarity, price } = req.body;
+    if (!name || !category || !rarity || !price) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const sql = "INSERT INTO marketplace (name, category, rarity, price, date_listed) VALUES (?, ?, ?, ?, NOW())";
+    con.query(sql, [name, category, rarity, price], (err, result) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.status(201).json({ success: true, message: "Card listed for sale" });
+        }
+    });
+});
+
+//Purchase a card (remove from marketplace)
+app.delete("/marketplace/:id", (req, res) => {
+    const id = req.params.id;
+    const sql = "DELETE FROM marketplace WHERE id = ?";
+    con.query(sql, [id], (err, result) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ success: true, message: "Card purchased successfully" });
+        }
+    });
+});
+
 // Register account
 app.post("/register", (req, res) => {
     const { email, username, password, confirmPassword } = req.body;

@@ -110,7 +110,7 @@
 
     <script>
         async function fetchCards() {
-            const response = await fetch("http://eperkun.it.pointpark.edu:3000/cards", {
+            const response = await fetch("http://ccmoore.it.pointpark.edu:3000/cards", {
                 headers: { "Authorization": "Bearer fake-token" }
             });
 
@@ -136,7 +136,7 @@
         }
 
         async function deleteCard(cardId) {
-            await fetch(`http://eperkun.it.pointpark.edu:3000/cards/${cardId}`, { method: "DELETE" });
+            await fetch(`http://ccmoore.it.pointpark.edu:3000/cards/${cardId}`, { method: "DELETE" });
             fetchCards();
         }
 

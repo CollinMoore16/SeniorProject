@@ -14,7 +14,7 @@ var con = db.createConnection({
     host: "db.it.pointpark.edu",
     user: "cardtrack",
     password: "cardtrack",
-    database: "cardtrack"
+    database: "cardtrack" 
 });
 con.connect((err) => {
     if (err) throw err;
@@ -23,7 +23,11 @@ con.connect((err) => {
   
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type']
+}));
 app.use(express.json());
 
 // Simulated session storage
@@ -37,7 +41,7 @@ app.get("/cards", checkAuth, (req, res) => {
         if(err) {
             res.status(500).json({ error: err.message });
         } else {
-            res.json(data);
+            res.json(formattedData);
         }
     });
 });
@@ -159,7 +163,15 @@ app.get("/marketplace", (req, res) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
-            res.json(data);
+            const formattedData = data.map(row => ({
+                id: row.id,
+                name: row.name,
+                category: row.category,
+                rarity: row.rarity,
+                price: parseFloat(row.Price),
+                date_listed: row.date_listed
+            }));
+            res.json(formattedData);
         }
     });
 });
@@ -167,6 +179,9 @@ app.get("/marketplace", (req, res) => {
 //List a card for sale
 app.post("/marketplace", (req, res) => {
     const { name, category, rarity, price } = req.body;
+
+    console.log("Recieved POST:", req.body);
+
     if (!name || !category || !rarity || !price) {
         return res.status(400).json({ message: "All fields are required" });
     }

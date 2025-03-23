@@ -1,45 +1,58 @@
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Card Marketplace</title>
-        <link rel="stylesheet" href="styles.css">
-        <script src="https://cdn.jsdeliver.net/npm/chart.js"></script>
-    </head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Marketplace</title>
+    <link rel="stylesheet" href="css/marketplace.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 
-    <body>
+<body>
+    <header>
         <h1>Card Marketplace</h1>
-
-        <div>
-            <input type="text" id="search" placeholder="Search for a card..."
+    </header>
+    <center>
+        <div id="filter-section">
+            <input type="text" id="search" placeholder="Search for a card..." />
             <select id="filter">
-                <option value="">all catergories</option>
+                <option value="">All Rarities</option>
                 <option value="common">Common</option>
-                <option value="Uncommon">Uncommon</option>
-                <option value="Rare">Rare</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
             </select>
             <select id="priceFilter">
                 <option value="">All Prices</option>
-                <option value="low">below $10</option>
+                <option value="low">Below $10</option>
                 <option value="mid">$10 - $50</option>
                 <option value="high">Above $50</option>
             </select>
         </div>
+    </center>
 
-        <div id="marketplace"></div>
+    <div id="marketplace"></div>
 
-        <h2>List a Card for Sale!</h2>
+    <h2>List a Card for Sale!</h2>
+    <center>
         <form id="listCardForm">
-            <input type="text" id="card_name" placeholder="Card Name" required>
-            <input type="text" id="category" placeholder="Category" required>
-            <input type="text" id="rarity" placeholder="Rarity" required>
-            <input type="number" id="price" placeholder="Price (USD)" required>
+            <input type="text" id="card_name" placeholder="Card Name" required />
+            <input type="text" id="category" placeholder="Type" required />
+            <input type="text" id="rarity" placeholder="Rarity" required />
+            <input type="number" id="price" placeholder="Price (USD)" required />
             <button type="submit">List Card</button>
         </form>
+    </center>
 
-        <h2>Price Trends</h2>
-        <canvas id="priceChart"></canvas>
+    <h2>Listing Trend Chart</h2>
+    <center>
+        <canvas id="priceChart" width="400" height="250"></canvas>
+    </center>
 
-        <script src="marketplace.js"></script>
-    </body>
+    <div id="themeToggleContainer">
+        <button id="toggleTheme" title="Toggle Dark Mode">Dark Mode🌙</button>
+    </div>
+    
+
+    <script src="marketplace.js"></script>
+</body>
 </html>

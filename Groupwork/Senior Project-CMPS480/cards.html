@@ -87,10 +87,21 @@
             background-color: #dc3545;
             color: white;
             width: 100%;
+            margin-bottom: 5px;
         }
 
         .delete-button:hover {
             background-color: #c82333;
+        }
+        
+        .sell-button {
+            background-color: #28a745;
+            color: white;
+            width: 100%;
+        }
+        
+        .sell-button:hover {
+            background-color: #218838;
         }
 
         /* Responsive design */
@@ -103,48 +114,85 @@
 </head>
 <body>
     <h2>Pokémon Cards</h2>
-    <button onclick="logout()">Logout</button>
-    <button onclick="window.location.href='addCard.html'">Add Card</button>
-
+    <div class="nav-buttons">
+        <button onclick="logout()">Logout</button>
+        <button onclick="window.location.href='addCard.html'">Add Card</button>
+        <button onclick="window.location.href='marketplace.html'">Go to Marketplace</button>
+    </div>
+    
     <div id="cardList"></div>
 
     <script>
         async function fetchCards() {
-            const response = await fetch("http://eperkun.it.pointpark.edu:3000/cards", {
-                headers: { "Authorization": "Bearer fake-token" }
-            });
-
-            if (!response.ok) {
-                alert("Please log in first.");
-                window.location.href = "login.html";
-                return;
+            try {
+                const response = await fetch("http://localhost:3000/cards", {
+                    headers: { "Authorization": "Bearer " + (localStorage.getItem("token") || "fake-token") }
+                });
+                
+                if (!response.ok) {
+                    alert("Please log in first.");
+                    window.location.href = "login.html";
+                    return;
+                }
+                
+                const cards = await response.json();
+                const cardList = document.getElementById("cardList");
+                cardList.innerHTML = "";
+                
+                cards.forEach(card => {
+                    const cardDiv = document.createElement("div");
+                    cardDiv.classList.add("card");
+                    
+                    cardDiv.innerHTML = `
+                        <p class="card-name"><strong>${card.name}</strong></p>
+                        <p class="card-info">Rarity: ${card.rarity}</p>
+                        <p class="card-info">Category: ${card.category}</p>
+                        <button class="delete-button" onclick="deleteCard(${card.card_id})">Delete</button>
+                        <button class="sell-button" onclick="listForSale(${card.card_id}, '${card.name}', '${card.category}', '${card.rarity}')">List for Sale</button>
+                    `;
+                    cardList.appendChild(cardDiv);
+                });
+            } catch (error) {
+                console.error("Error fetching cards:", error);
             }
-
-            const cards = await response.json();
-            const cardList = document.getElementById("cardList");
-            cardList.innerHTML = "";
-
-            cards.forEach(card => {
-                const cardDiv = document.createElement("div");
-                cardDiv.innerHTML = `
-                    <p><strong>${card.name}</strong> (${card.rarity}) - ${card.category}</p>
-                    <button onclick="deleteCard(${card.card_id})">Delete</button>
-                    <hr>
-                `;
-                cardList.appendChild(cardDiv);
-            });
         }
 
         async function deleteCard(cardId) {
-            await fetch(`http://eperkun.it.pointpark.edu:3000/cards/${cardId}`, { method: "DELETE" });
-            fetchCards();
+            try {
+                const response = await fetch(`http://localhost:3000/cards/${cardId}`, { 
+                    method: "DELETE",
+                    headers: { "Authorization": "Bearer " + (localStorage.getItem("token") || "fake-token") }
+                });
+                
+                if (response.ok) {
+                    fetchCards();
+                } else {
+                    alert("Error deleting card");
+                }
+            } catch (error) {
+                console.error("Error deleting card:", error);
+            }
         }
 
+        function listForSale(cardId, name, category, rarity) {
+            // Store card details in localStorage to retrieve in marketplace.html
+            localStorage.setItem("cardToSell", JSON.stringify({
+                cardId: cardId,
+                name: name,
+                category: category,
+                rarity: rarity
+            }));
+            
+            // Redirect to marketplace page
+            window.location.href = "marketplace.html#sell";
+        }
+        
         function logout() {
             localStorage.removeItem("loggedIn");
+            localStorage.removeItem("token");
             window.location.href = "login.html";
         }
-
+        
         document.addEventListener("DOMContentLoaded", fetchCards);
     </script>
 </body>

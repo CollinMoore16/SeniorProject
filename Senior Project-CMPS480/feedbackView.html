@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .feedback-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feedback-content {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .feedback-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+        }
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .export-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .export-btn:hover {
+            background: #45a049;
+        }
+        .clear-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .clear-btn:hover {
+            background: #cc0000;
+        }
+        .filter-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .no-feedback {
+            text-align: center;
+            color: #666;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Feedback Dashboard</h1>
+    
+    <div class="controls">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Search feedback...">
+        <button onclick="exportToCSV()" class="export-btn">Export to CSV</button>
+        <button onclick="clearFeedback()" class="clear-btn">Clear All</button>
+    </div>
+
+    <div id="feedbackContainer"></div>
+
+    <script>
+        function loadFeedback() {
+            const container = document.getElementById('feedbackContainer');
+            const feedback = JSON.parse(localStorage.getItem('website_feedback') || '[]');
+            
+            if (feedback.length === 0) {
+                container.innerHTML = '<p class="no-feedback">No feedback available.</p>';
+                return;
+            }
+
+            displayFeedback(feedback);
+        }
+
+        function displayFeedback(feedback) {
+            const container = document.getElementById('feedbackContainer');
+            container.innerHTML = feedback.reverse().map(item => `
+                <div class="feedback-card">
+                    <div class="feedback-content">${item.feedback}</div>
+                    <div class="feedback-meta">
+                        <strong>Page:</strong> ${item.page}<br>
+                        <strong>Date:</strong> ${new Date(item.timestamp).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportToCSV() {
+            const feedback = JSON.parse(localStorage.getItem('website_feedback') || '[]');
+            if (feedback.length === 0) {
+                alert('No feedback to export!');
+                return;
+            }
+
+            const csvContent = [
+                ['Feedback', 'Page', 'Timestamp'],
+                ...feedback.map(item => [
+                    item.feedback.replace(/"/g, '""'), 
+                    item.page,
+                    item.timestamp
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'feedback_export_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+        }
+
+        function clearFeedback() {
+            if (confirm('Are you sure you want to clear all feedback? This cannot be undone.')) {
+                localStorage.removeItem('website_feedback');
+                loadFeedback();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const feedback = JSON.parse(localStorage.getItem('website_feedback') || '[]');
+            const filtered = feedback.filter(item => 
+                item.feedback.toLowerCase().includes(searchTerm) ||
+                item.page.toLowerCase().includes(searchTerm)
+            );
+            displayFeedback(filtered);
+        });
+
+        loadFeedback();
+    </script>
+</body>
+</html>

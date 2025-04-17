@@ -1,4 +1,4 @@
-/* Base styles */
+/* Updated login.css - More professional styling (No Forgot Password) */
 :root {
     --primary-color: #4a6cfa;
     --primary-hover: #3a56c5;
@@ -51,6 +51,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background-image: linear-gradient(to bottom right, rgba(74, 108, 250, 0.05), rgba(74, 108, 250, 0.01));
+}
+
+body.dark-mode {
+    background-image: linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.01));
 }
 
 /* Container */
@@ -61,23 +66,52 @@ body {
     padding: 20px;
 }
 
+/* Logo area */
+.logo-area {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-area img {
+    height: 60px;
+    margin-bottom: 0.5rem;
+}
+
 /* Typography */
 h2 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     text-align: center;
     margin-bottom: 1.5rem;
     color: var(--primary-color);
+    font-weight: 700;
 }
 
 /* Form */
 form {
     background-color: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 16px var(--shadow-color);
-    padding: 2rem;
+    box-shadow: 0 8px 24px var(--shadow-color);
+    padding: 2.5rem;
     width: 100%;
-    max-width: 400px;
+    max-width: 450px;
     margin-bottom: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+body.dark-mode form {
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: var(--primary-color);
 }
 
 label {
@@ -87,15 +121,20 @@ label {
     font-size: 0.95rem;
 }
 
+.input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
 input {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     border-radius: 6px;
     border: 1px solid var(--input-border);
     font-size: 1rem;
     background-color: var(--input-bg);
     color: var(--text-color);
-    margin-bottom: 1rem;
+    transition: all 0.2s ease;
 }
 
 input:focus {
@@ -109,50 +148,150 @@ input::placeholder {
     opacity: 0.7;
 }
 
+/* Password visibility toggle */
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--secondary-color);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 1rem;
+}
+
+/* Remember me */
+.remember-me-container {
+    margin-bottom: 1.5rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+}
+
+.remember-me input {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.remember-me label {
+    font-weight: normal;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
 /* Button */
 button {
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
-    padding: 0.75rem 1.5rem;
+    padding: 0.85rem 1.5rem;
     border-radius: 6px;
     border: none;
     display: block;
     width: 100%;
     background-color: var(--primary-color);
     color: white;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: all 0.2s ease;
     margin-top: 1rem;
+    position: relative;
+    overflow: hidden;
 }
 
 button:hover {
     background-color: var(--primary-hover);
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 /* Register link */
-a {
+.register-link-container {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+a.register-link {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 500;
-    display: block;
-    text-align: center;
-    margin-top: 1rem;
+    display: inline-block;
     transition: color 0.2s;
 }
 
-a:hover {
+a.register-link:hover {
     color: var(--primary-hover);
     text-decoration: underline;
+}
+
+/* Dark mode toggle */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.theme-toggle button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    width: auto;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--input-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.theme-toggle button:hover {
+    background-color: var(--input-bg);
+    transform: translateY(-1px);
+}
+
+/* Error message */
+.error-message {
+    color: var(--error-color);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+/* Loading indicator */
+.loading-indicator {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+button.loading .loading-indicator {
+    display: block;
+}
+
+button.loading span {
+    visibility: hidden;
 }
 
 /* Media Queries */
 @media (max-width: 480px) {
     form {
-        padding: 1.5rem;
+        padding: 1.75rem;
     }
     
     h2 {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    .theme-toggle {
+        top: 10px;
+        right: 10px;
     }
 }

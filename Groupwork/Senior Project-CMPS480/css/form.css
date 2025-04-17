@@ -184,6 +184,26 @@ body.dark-mode .btn-cancel:hover {
     right: 20px;
     z-index: 100;
 }
+.top-actions {
+    margin: 1rem;
+    text-align: left;
+}
+
+.btn-view {
+    background-color: #2a75bb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-view:hover {
+    background-color: #1a65ab;
+}
 
 #theme-toggle-btn {
     background-color: var(--card-bg);

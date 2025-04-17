@@ -1,301 +1,118 @@
 const express = require("express");
-const cors = require("cors"); // Allow frontend to communicate with backend
-const app = express();
+const cors = require("cors");
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const path = require('path');
 
-const emailValidator = require("email-validator");
+const app = express();
+const SECRET = 'your_jwt_secret_here';    // Move this to env var in production
+const saltRounds = 10;
 
-const bcrypt = require('bcrypt');
-const saltValue = 10;
-
-
-//Database connection
+// Database connection
 const db = require("mysql");
-var con = db.createConnection({
-    host: "db.it.pointpark.edu",
-    user: "cardtrack",
-    password: "cardtrack",
-    database: "cardtrack" 
+const con = db.createConnection({
+  host: "db.it.pointpark.edu",
+  user: "cardtrack",
+  password: "cardtrack",
+  database: "cardtrack"
 });
-con.connect((err) => {
-    if (err) throw err;
-    console.log('Database connection successful');
-});
-  
-const PORT = 3000;
+con.connect(err => { if (err) throw err; console.log('DB connected'); });
 
+// Middleware
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Content-Type']
+  origin: '*',
+  methods: ['GET','POST','DELETE'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 app.use(express.json());
-
-// Simulated session storage
-let loggedInUser = null;
-var loggedInUserID = -1;
-
-// Get All Cards (Requires Login)
-app.get("/cards", checkAuth, (req, res) => {
-    const sql = "SELECT * FROM cards WHERE user_id = ?";
-    con.query(sql, [loggedInUserID], (err, data) => {
-        if(err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.json(data); // Changed from formattedData to data
-        }
-    });
-});
-
-app.use(express.static(path.join(__dirname)));
-
-app.get('/cards.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'cards.html'));
-});
-
-
-
-// Login Route
-app.post("/login", (req, res) => {
-    const { username, password } = req.body;
-    const sql = "SELECT * FROM users WHERE username = ?";
-
-    con.query(sql, [username], (err, result) => {
-        if(err) {
-            return res.status(500).json({ error: err.message });
-        }
-
-        if(result.length === 0) {
-            return res.status(401).json({ success: false, message: "Username or password is incorrect." });
-        }
-
-        const hashedPw = result[0].password;
-        bcrypt.compare(password, hashedPw, (err, match) => {
-            if(err) {
-                console.log(err.message);
-                return res.status(500).json({ success: false, message: "Error verifying password" });
-            }
-            
-            if(!match) {
-                return res.status(401).json({ success: false, message: "Username or password is incorrect." });
-            }
-
-            loggedInUser = result[0].username;
-            loggedInUserID = result[0].user_id;
-            res.json({ success: true, message: "Login successful." });
-        });
-    });
-});
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-// Logout Route
-app.post("/logout", (req, res) => {
-    loggedInUser = null;
-    loggedInUserID = -1;
-    res.json({ success: true, message: "Logged out successfully!" });
-});
-
-// Middleware to check authentication
+// Auth middleware
 function checkAuth(req, res, next) {
-    if (!loggedInUser) {
-        return res.status(401).json({ message: "Unauthorized. Please log in." });
-    }
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return res.status(401).json({ message: 'Missing token' });
+  try {
+    const payload = jwt.verify(token, SECRET);
+    req.user_id = payload.user_id;
     next();
+  } catch (e) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
 }
 
-// Get Card by ID (Protected)
-app.get("/cards/:id", checkAuth, (req, res) => {
-    const id = req.params.id;
-    const sql = "SELECT * FROM cards WHERE card_id = ?";
-
-    con.query(sql, [id], (err, data) => {
-        if(err) {
-            return res.status(500).json({ error: err.message });
-        }
-
-        if(data.length === 0) {
-            return res.status(404).json({ message: "Card not found" });
-        }
-
-        res.json(data);
+// Login
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const sql = 'SELECT user_id, password FROM users WHERE username = ?';
+  con.query(sql, [username], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(401).json({ message: 'Invalid creds' });
+    bcrypt.compare(password, results[0].password, (err, match) => {
+      if (err || !match) return res.status(401).json({ message: 'Invalid creds' });
+      const token = jwt.sign({ user_id: results[0].user_id }, SECRET, { expiresIn: '2h' });
+      res.json({ token });
     });
+  });
 });
 
-// Add a New Card 
-app.post("/cards", checkAuth, (req, res) => {
-    console.log(req.body);
-    const { name, category, set_name, rarity, condition, value } = req.body;
-    if (!name || !category || !rarity) {
-        return res.status(400).json({ message: "Missing required fields" });
+// Register
+app.post('/register', (req, res) => {
+  const { email, username, password, confirmPassword } = req.body;
+  if (password !== confirmPassword)
+    return res.status(400).json({ message: 'Passwords must match' });
+  if (!/[A-Z]/.test(password) || !/[\W_]/.test(password) || password.length < 10)
+    return res.status(400).json({ message: 'Password too weak' });
+
+  // Single query for both email & username
+  const dupSql = 'SELECT email, username FROM users WHERE email = ? OR username = ?';
+  con.query(dupSql, [email, username], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    for (const r of rows) {
+      if (r.email === email) return res.status(400).json({ message: 'Email in use' });
+      if (r.username === username) return res.status(400).json({ message: 'Username in use' });
     }
-
-    sql = "INSERT INTO cards (`name`, category, set_name, rarity, `condition`, value, user_id, date_added, date_modified) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())"
-    con.query(sql, [name, category, set_name, rarity, condition, value, loggedInUserID], (err, result) => {
-        if(err) {
-            console.log("Insert query failed " + err.message);
-            return res.status(500).json({ error: err.message });
-        }
-        return res.status(201).json({ success: true, message: "Card was added successfully" });
-    });
-});
-
-// Delete a Card 
-app.delete("/cards/:id", checkAuth, (req, res) => {
-    const id = req.params.id;
-    const sql = "DELETE FROM cards WHERE card_id = ?";
-    con.query(sql, [id], (err, result) => {
-        if(err) {
-            console.log(err.message);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ success: true, message: "Card deleted successfully" });
-    });
-});
-
-//Fetch all cards in the marketplace
-app.get("/marketplace", (req, res) => {
-    const sql = "SELECT * FROM marketplace";
-    con.query(sql, (err, data) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            const formattedData = data.map(row => ({
-                id: row.id,
-                name: row.name,
-                category: row.category,
-                rarity: row.rarity,
-                price: parseFloat(row.Price),
-                date_listed: row.date_listed
-            }));
-            res.json(formattedData);
-        }
-    });
-});
-
-//List a card for sale
-app.post("/marketplace", (req, res) => {
-    const { name, category, rarity, price } = req.body;
-
-    console.log("Recieved POST:", req.body);
-
-    if (!name || !category || !rarity || !price) {
-        return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const sql = "INSERT INTO marketplace (name, category, rarity, price, date_listed) VALUES (?, ?, ?, ?, NOW())";
-    con.query(sql, [name, category, rarity, price], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.status(201).json({ success: true, message: "Card listed for sale" });
-        }
-    });
-});
-
-//Purchase a card (remove from marketplace)
-app.delete("/marketplace/:id", (req, res) => {
-    const id = req.params.id;
-    const sql = "DELETE FROM marketplace WHERE id = ?";
-    con.query(sql, [id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.json({ success: true, message: "Card purchased successfully" });
-        }
-    });
-});
-
-// Register account
-app.post("/register", (req, res) => {
-    const { email, username, password, confirmPassword } = req.body;
-
-    console.log(req.body);
-
-    // Check if email address is valid
-    if (!emailValidator.validate(email)) {
-        console.log("Invalid email address");
-        return res.status(400).json({ success: false, message: "Invalid email address." });
-    }
-
-    // Check if email is already in use
-    var sql = 'SELECT * FROM users WHERE email = ? ';
-    con.query(sql, [email], (err, data) => {
-        if(err) {
-            console.log(err.message);
-            return res.status(500).json({ error: err.message });
-        }
-
-        if(data.length > 0) {
-            console.log("Email address in use");
-            return res.status(400).json({ success: false, message: "Email address is already in use." });
-        }
-    });
-
-    // Check if username meets requirements
-
-    // Regex written by ChatGPT, it's verifying that the username has only:
-    // Letters a-Z
-    // Numbers 0-9
-    // - and _
-    // and is less than or equal to 16 characters
-    if (!/^[a-zA-Z0-9\-_]{1,16}$/.test(username)) {
-        console.log("Invalid username")
-        return res.status(400).json({ success: false, message: "Invalid username." });
-    }
-
-    // Check if username is already in use
-    sql = 'SELECT * FROM users WHERE username = ? ';
-    con.query(sql, [username], (err, data) => {
-        if(err) {
-            console.log(err.message);
-            return res.status(500).json({ error: err.message });
-        }
-
-        if(data.length > 0) {
-            console.log("Username already in use");
-            return res.status(400).json({ success: false, message: "Username is already in use." });
-        }
-    });
-
-    // Check if entered passwords match
-    if (password !== confirmPassword) {
-        console.log("Mismatched passwords");
-        return res.status(400).json({ success: false, message: "Passwords do not match." });
-    }
-
-    // Check if password meets requirements
-    // Length >= 10 charactesr
-    // Letters a-Z
-    // At least 1 special character
-    if (!(password.length >= 10 && /[A-Z]/.test(password) && /[\W_]/.test(password))) {
-        console.log("Password doesn't meet requirements");
-        return res.status(400).json({ success: false, message: "Password doesn't meet requirements." });
-    }
-
-    // If all checks pass, create the account
-    bcrypt.hash(password, saltValue, (err, hashedPw) => {
-        if(err) {
-            console.log("error hashing password");
-            return res.status(500).json({ error: err.message });
-        }
-
-        sql = "INSERT INTO users (email, username, password, date_registered, date_modified) VALUES (?, ?, ?, NOW(), NOW())"
-        con.query(sql, [email, username, hashedPw], (err, result) => {
-            if(err) {
-                console.log("Insert query failed " + err.message);
-                return res.status(500).json({ error: err.message });
-            }
-            return res.status(201).json({ success: true, message: "Account was created successfully." });
-        });
+    // All checks passed
+    bcrypt.hash(password, saltRounds, (err, hash) => {
+      if (err) return res.status(500).json({ error: err.message });
+      const ins = 'INSERT INTO users (email, username, password, date_registered, date_modified) VALUES (?,?,?,NOW(),NOW())';
+      con.query(ins, [email, username, hash], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'Registered' });
       });
+    });
+  });
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+// Cards routes
+app.get('/cards', checkAuth, (req, res) => {
+  con.query('SELECT * FROM cards WHERE user_id = ?', [req.user_id], (e,d) => e ? res.status(500).json({error:e.message}) : res.json(d));
 });
+app.post('/cards', checkAuth, (req, res) => {
+  const { name, category, set_name, rarity, condition, value } = req.body;
+  const sql = 'INSERT INTO cards (name,category,set_name,rarity,`condition`,value,user_id,date_added,date_modified) VALUES (?,?,?,?,?,?,?,NOW(),NOW())';
+  con.query(sql, [name,category,set_name,rarity,condition,value,req.user_id], (e) => e ? res.status(500).json({error:e.message}) : res.status(201).json({ message:'Added' }));
+});
+app.delete('/cards/:id', checkAuth, (req, res) => {
+  con.query('DELETE FROM cards WHERE card_id = ?', [req.params.id], (e) => e ? res.status(500).json({error:e.message}) : res.json({ message:'Deleted' }));
+});
+
+// Marketplace
+app.get('/marketplace', (req, res) => {
+  con.query('SELECT * FROM marketplace', (e,rows) => {
+    if (e) return res.status(500).json({error:e.message});
+    res.json(rows.map(r=>({ id:r.id, name:r.name, category:r.category, rarity:r.rarity, price:parseFloat(r.Price), date_listed:r.date_listed })));
+  });
+});
+app.post('/marketplace', (req, res) => {
+  const { name, category, rarity, price } = req.body;
+  const sql = 'INSERT INTO marketplace (name,category,rarity,price,date_listed) VALUES (?,?,?,? ,NOW())';
+  con.query(sql, [name,category,rarity,price], (e) => e ? res.status(500).json({error:e.message}) : res.status(201).json({ message:'Listed' }));
+});
+app.delete('/marketplace/:id', (req,res) => {
+  con.query('DELETE FROM marketplace WHERE id = ?', [req.params.id], (e) => e ? res.status(500).json({error:e.message}) : res.json({message:'Purchased'}));
+});
+
+// Start
+const PORT = process.env.PORT||3000;
+app.listen(PORT, () => console.log(`Listening on ${PORT}`));

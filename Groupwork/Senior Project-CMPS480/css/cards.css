@@ -1,0 +1,197 @@
+:root {
+  --blue: #2a75bb;
+  --blue-dark: #1a65ab;
+  --green: #28a745;
+  --green-dark: #218838;
+  --red: #dc3545;
+  --red-dark: #c82333;
+  --glass: rgba(255, 255, 255, 0.2);
+}
+
+body {
+  font-family: 'Rubik', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to right, #c2e9fb, #a1c4fd);
+  color: #333;
+  transition: background 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background: #1e1e2f;
+  color: #f0f0f0;
+}
+header {
+  background: linear-gradient(to right, #2a75bb, #3466af);
+  color: white;
+  text-align: center;
+  padding: 1.2rem 1rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  border-bottom: 3px solid #fdd835;
+}
+
+header h2 {
+  font-size: 1.8rem;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.theme-toggle button {
+  background-color: white;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease;
+}
+
+body.dark-mode .theme-toggle button {
+  background-color: #2a2a3f;
+  color: white;
+}
+
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 1.5rem 2rem;
+  background-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  max-width: 1000px;
+  margin: 2rem auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.nav-buttons button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 30px;
+  background-color: var(--blue);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons button:hover {
+  background-color: var(--blue-dark);
+  transform: scale(1.05);
+}
+
+#cardList {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .card {
+  background-color: #2b2e3b;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.2);
+}
+
+.card-name {
+  font-size: 1.6rem;
+  color: var(--blue);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+body.dark-mode .card-name {
+  color: #80bfff;
+}
+
+.card-info {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+body.dark-mode .card-info {
+  color: #ccc;
+}
+
+.card button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-button {
+  background-color: var(--red);
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: var(--red-dark);
+}
+
+.sell-button {
+  background-color: var(--green);
+  color: white;
+}
+
+.sell-button:hover {
+  background-color: var(--green-dark);
+}
+
+@media (max-width: 768px) {
+  header h2 {
+    font-size: 2rem;
+  }
+
+  .nav-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nav-buttons button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .theme-toggle {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
